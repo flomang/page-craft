@@ -44,7 +44,7 @@ async fn main() -> std::io::Result<()> {
 
         // create db connection pool
         let manager = ConnectionManager::<PgConnection>::new(database_url);
-        let pool: library::db::Pool = r2d2::Pool::builder()
+        let pool: lib_authentication::db::Pool = r2d2::Pool::builder()
             .build(manager)
             .expect("Failed to create pool.");
 
@@ -60,7 +60,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool))
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .wrap(library::auth::middleware::Authentication::new(library::auth::SECRET_KEY.as_bytes(), &config::IGNORE_ROUTES)) // Comment this line of code if you want to integrate with yew-address-book-frontend
+            .wrap(lib_authentication::auth::middleware::Authentication::new(lib_authentication::auth::SECRET_KEY.as_bytes(), &config::IGNORE_ROUTES)) 
             .configure(config::config_services)
             .app_data(web::JsonConfig::default().limit(4096))
     })

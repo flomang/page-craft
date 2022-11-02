@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-library = { path = "../libs/library" }
+lib-utils = { path = "../libs/utils" }
+lib-authentication = { path = "../libs/authentication" }
 actix-cors = "0.6.1"
 actix-web-httpauth = "0.6.0"
 actix-service = "2.0.2"

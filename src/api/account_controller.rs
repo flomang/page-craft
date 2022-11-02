@@ -5,9 +5,9 @@ use diesel::PgConnection;
 use std::future::{ready, Ready};
 
 use crate::models::{SlimUser, UpdateUserPassword, User, Invitation};
-use library::errors::ServiceError;
-use library::auth::hash_password;
-use library::db::Pool;
+use lib_authentication::errors::ServiceError;
+use lib_authentication::auth::hash_password;
+use lib_authentication::db::Pool;
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -61,7 +61,7 @@ pub async fn login(
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ServiceError> {
     let user = web::block(move || query(auth_data.into_inner(), pool)).await??;
-    let token = library::auth::create_jwt(user.id, user.username.clone())?;
+    let token = lib_authentication::auth::create_jwt(user.id, user.username.clone())?;
     identity.remember(token.clone());
 
     let session = Session {
@@ -89,7 +89,7 @@ fn query(auth_data: AuthData, pool: web::Data<Pool>) -> Result<SlimUser, Service
         // set auth password if not set for master
         if user.email == master && user.hash == "" {
             let now = Utc::now().naive_utc();
-            let password = library::auth::hash_password(&auth_data.password)?;
+            let password = lib_authentication::auth::hash_password(&auth_data.password)?;
             let set_pwd = UpdateUserPassword {
                 id: user.id,
                 hash: password,
@@ -102,7 +102,7 @@ fn query(auth_data: AuthData, pool: web::Data<Pool>) -> Result<SlimUser, Service
                 Ok(u) => return Ok(u.into()),
                 Err(e) => return Err(ServiceError::BadRequest(e.to_string())),
             }
-        } else if let Ok(matching) = library::auth::verify(&user.hash, &auth_data.password) {
+        } else if let Ok(matching) = lib_authentication::auth::verify(&user.hash, &auth_data.password) {
             if matching {
                 return Ok(user.into());
             }

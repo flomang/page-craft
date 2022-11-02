@@ -1,11 +1,11 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
 use diesel::{prelude::*, PgConnection};
 use serde::Deserialize;
-use library::db::Pool;
+use lib_authentication::db::Pool;
 
 //use crate::email_service::send_invitation;
 use crate::models::Invitation;
-use library::errors::ServiceError;
+use lib_authentication::errors::ServiceError;
 use uuid::Uuid;
 
 //pub static KEY: [u8; 16] = *include_bytes!("../secret.key");
@@ -23,7 +23,7 @@ pub async fn create_invitation(
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ServiceError> {
     // must be logged in
-    let claims = library::auth::unlock_request(&request)?;
+    let claims = lib_authentication::auth::unlock_request(&request)?;
     let uid = Uuid::parse_str(&claims.sub).unwrap();
 
     let result = web::block(move || {

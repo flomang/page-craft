@@ -1,5 +1,5 @@
 use crate::models::Invitation;
-use library::errors::ServiceError;
+use lib_authentication::errors::ServiceError;
 use sparkpost::transmission::{
     EmailAddress, Message, Options, Recipient, Transmission, TransmissionResponse,
 };
