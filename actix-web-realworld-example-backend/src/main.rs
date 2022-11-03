@@ -4,10 +4,10 @@ extern crate chrono;
 extern crate dotenv;
 
 pub mod email_service;
-pub mod models;
-pub mod schema;
-pub mod routes;
 pub mod handlers;
+pub mod models;
+pub mod routes;
+pub mod schema;
 
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -34,6 +34,7 @@ async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
 
+    let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
     // Start http server
     HttpServer::new(move || {
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -58,11 +59,15 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool))
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .wrap(lib_authentication::auth::middleware::Authentication::new(lib_authentication::auth::SECRET_KEY.as_bytes(), &routes::IGNORE_ROUTES)) 
+            .wrap(lib_authentication::auth::middleware::Authentication::new(
+                lib_authentication::auth::SECRET_KEY.as_bytes(),
+                &routes::IGNORE_ROUTES,
+            ))
             .configure(routes::config_services)
             .app_data(web::JsonConfig::default().limit(4096))
     })
-    .bind("127.0.0.1:3000")?
+    .bind(&bind_address)
+    .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
     .run()
     .await
 }

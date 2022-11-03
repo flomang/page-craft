@@ -4,9 +4,9 @@ pub async fn ping() -> HttpResponse {
     HttpResponse::Ok().body("pong!".to_string())
 }
 
-//#[cfg(test)]
+// #[cfg(test)]
 // mod tests {
-//     use crate::{config, App};
+//     use crate::{routes, App};
 //     use actix_cors::Cors;
 //     use actix_service::Service;
 //     use actix_web::{http, http::StatusCode, test};
@@ -14,7 +14,7 @@ pub async fn ping() -> HttpResponse {
 
 //     #[actix_rt::test]
 //     async fn test_ping_ok() {
-//         let pool = config::db::migrate_and_config_db(":memory:");
+//         let pool = routes::db::migrate_and_config_db(":memory:");
 
 //         let mut app = test::init_service(
 //             App::new()
