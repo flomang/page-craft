@@ -1,7 +1,7 @@
 use actix_identity::Identity;
+use actix_web::HttpMessage;
 use actix_web::{dev::Payload, post, web, Error, FromRequest, HttpRequest, HttpResponse};
 use diesel::prelude::*;
-use diesel::PgConnection;
 use std::future::{ready, Ready};
 
 use crate::models::{SlimUser, UpdateUserPassword, User, Invitation};
@@ -37,7 +37,7 @@ impl FromRequest for LoggedUser {
 
     fn from_request(req: &HttpRequest, pl: &mut Payload) -> Self::Future {
         if let Ok(identity) = Identity::from_request(req, pl).into_inner() {
-            if let Some(user_json) = identity.identity() {
+            if let Ok(user_json) = identity.id() {
                 if let Ok(user) = serde_json::from_str(&user_json) {
                     return ready(Ok(user));
                 }
@@ -48,21 +48,20 @@ impl FromRequest for LoggedUser {
     }
 }
 
-#[post("")]
-pub async fn logout(identity: Identity) -> HttpResponse {
-    identity.forget();
-    HttpResponse::Ok().finish()
+pub async fn logout(id: Identity) -> HttpResponse {
+    id.logout();
+    HttpResponse::NoContent().finish()
 }
 
-#[post("")]
 pub async fn login(
+    req: HttpRequest,
     auth_data: web::Json<AuthData>,
-    identity: Identity,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ServiceError> {
     let user = web::block(move || query(auth_data.into_inner(), pool)).await??;
     let token = lib_authentication::auth::create_jwt(user.id, user.username.clone())?;
-    identity.remember(token.clone());
+
+    Identity::login(&req.extensions(), token.clone()).unwrap();
 
     let session = Session {
         user_id: user.id,
@@ -75,14 +74,19 @@ pub async fn login(
     Ok(HttpResponse::Ok().json(session))
 }
 
+pub async fn get_me(logged_user: LoggedUser) -> HttpResponse {
+    HttpResponse::Ok().json(logged_user)
+}
+
 /// Diesel query
 fn query(auth_data: AuthData, pool: web::Data<Pool>) -> Result<SlimUser, ServiceError> {
     use crate::schema::users::dsl::{email, users};
 
-    let conn: &PgConnection = &pool.get().unwrap();
+    let mut conn = pool.get().unwrap();
+
     let mut people = users
         .filter(email.eq(&auth_data.email))
-        .load::<User>(conn)?;
+        .load::<User>(&mut conn)?;
 
     if let Some(user) = people.pop() {
         let master = std::env::var("MASTER_EMAIL").expect("MASTER_EMAIL must be set");
@@ -96,7 +100,7 @@ fn query(auth_data: AuthData, pool: web::Data<Pool>) -> Result<SlimUser, Service
                 updated_at: now,
             };
 
-            let result = diesel::update(users).set(&set_pwd).get_result::<User>(conn);
+            let result = diesel::update(users).set(&set_pwd).get_result::<User>(&mut conn);
 
             match result {
                 Ok(u) => return Ok(u.into()),
@@ -143,10 +147,10 @@ fn query_invitation(
     use crate::schema::users::dsl::users;
     let invitation_id = uuid::Uuid::parse_str(&invitation_id)?;
 
-    let conn: &PgConnection = &pool.get().unwrap();
+    let mut conn = pool.get().unwrap();
     invitations
         .filter(id.eq(invitation_id))
-        .load::<Invitation>(conn)
+        .load::<Invitation>(&mut conn)
         .map_err(|_db_error| ServiceError::BadRequest("Invalid Invitation".into()))
         .and_then(|mut result| {
             if let Some(invitation) = result.pop() {
@@ -157,7 +161,7 @@ fn query_invitation(
                     dbg!(&password);
                     let user = User::from_details(invitation.recipient_email, password);
                     let inserted_user: User =
-                        diesel::insert_into(users).values(&user).get_result(conn)?;
+                        diesel::insert_into(users).values(&user).get_result(&mut conn)?;
                     dbg!(&inserted_user);
                     return Ok(inserted_user.into());
                 }

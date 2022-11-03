@@ -6,8 +6,8 @@ extern crate dotenv;
 pub mod email_service;
 pub mod models;
 pub mod schema;
-pub mod config;
-pub mod api;
+pub mod routes;
+pub mod handlers;
 
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -23,9 +23,7 @@ pub fn establish_connection() -> PgConnection {
 
 use actix_cors::Cors;
 use actix_web::{http, middleware, web, App, HttpServer};
-//use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
-
 
 // Tokio-based single-threaded async runtime for the Actix ecosystem.
 // To achieve similar performance to multi-threaded, work-stealing runtimes, applications using actix-rt will create multiple, mostly disconnected, single-threaded runtimes.
@@ -60,8 +58,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool))
             .wrap(cors)
             .wrap(middleware::Logger::default())
-            .wrap(lib_authentication::auth::middleware::Authentication::new(lib_authentication::auth::SECRET_KEY.as_bytes(), &config::IGNORE_ROUTES)) 
-            .configure(config::config_services)
+            .wrap(lib_authentication::auth::middleware::Authentication::new(lib_authentication::auth::SECRET_KEY.as_bytes(), &routes::IGNORE_ROUTES)) 
+            .configure(routes::config_services)
             .app_data(web::JsonConfig::default().limit(4096))
     })
     .bind("127.0.0.1:3000")?
