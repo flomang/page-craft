@@ -2,7 +2,7 @@ use actix_web::{web, HttpResponse};
 use diesel::prelude::*;
 use serde::Deserialize;
 
-use crate::models::{Invitation, SlimUser, User};
+use crate::models_bk::{Invitation, SlimUser, User};
 use lib_authentication::errors::ServiceError;
 use lib_authentication::auth::hash_password;
 use lib_authentication::db::Pool;

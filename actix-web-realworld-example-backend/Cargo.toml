@@ -6,16 +6,26 @@ edition = "2021"
 [dependencies]
 lib-utils = { path = "../libs/utils" }
 lib-authentication = { path = "../libs/authentication" }
+
+actix-rt = "2.7.0"
 actix-cors = "0.6.1"
 actix-web-httpauth = "0.8.0"
 actix-service = "2.0.2"
 actix-web = "4"
 actix-identity = "0.5"
+
 argonautica = "0.2.0"
 chrono = { version = "0.4.10", features = ["serde"] }
 derive_more = "0.99"
-#diesel = { version = "1.4.5", features = ["postgres","sqlite", "uuidv07", "r2d2", "chrono"] }
-diesel = { version = "2", features = ["postgres", "r2d2", "uuid", "chrono", "sqlite"] }
+
+diesel = { version = "2", features = [
+    "postgres",
+    "r2d2",
+    "uuid",
+    "chrono",
+    "sqlite",
+] }
+
 dotenv = "0.15"
 env_logger = "0.9"
 futures = "0.3.12"
@@ -28,6 +38,10 @@ sparkpost = "0.5"
 uuid = { version = "1.2", features = ["serde", "v4"] }
 time = "0.3"
 log = "0.4.16"
-alcoholic_jwt = "1.0.0"
-actix-rt = "2.7.0"
 jsonwebtoken = "8.1.0"
+regex = "1.6.0"
+validator = { version = "0.16", features = ["derive"] }
+actix = "0.13.0"
+failure = "0.1.8"
+num_cpus = "1.14.0"
+libreauth = "0.15.0"

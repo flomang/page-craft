@@ -4,7 +4,7 @@ use actix_web::{dev::Payload, post, web, Error, FromRequest, HttpRequest, HttpRe
 use diesel::prelude::*;
 use std::future::{ready, Ready};
 
-use crate::models::{SlimUser, UpdateUserPassword, User, Invitation};
+use crate::models_bk::{SlimUser, UpdateUserPassword, User, Invitation};
 use lib_authentication::errors::ServiceError;
 use lib_authentication::auth::hash_password;
 use lib_authentication::db::Pool;
@@ -52,6 +52,7 @@ pub async fn logout(id: Identity) -> HttpResponse {
     id.logout();
     HttpResponse::NoContent().finish()
 }
+
 
 pub async fn login(
     req: HttpRequest,

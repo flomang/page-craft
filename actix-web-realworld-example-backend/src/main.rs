@@ -1,14 +1,27 @@
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate failure;
+#[macro_use]
+extern crate serde_json;
+
 extern crate chrono;
 extern crate dotenv;
 
 pub mod email_service;
 pub mod handlers;
-pub mod models;
-pub mod routes;
-pub mod schema;
+pub mod models_bk;
+mod db;
+mod routes;
+mod schema;
+mod error;
+mod models;
+mod prelude;
 
+use actix::Addr;
+use actix_identity::IdentityMiddleware;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use dotenv::dotenv;
@@ -25,6 +38,10 @@ use actix_cors::Cors;
 use actix_web::{http, middleware, web, App, HttpServer};
 use diesel::r2d2::{self, ConnectionManager};
 
+pub struct AppState {
+    pub db: Addr<db::DbExecutor>,
+}
+
 // Tokio-based single-threaded async runtime for the Actix ecosystem.
 // To achieve similar performance to multi-threaded, work-stealing runtimes, applications using actix-rt will create multiple, mostly disconnected, single-threaded runtimes.
 // This approach has good performance characteristics for workloads where the majority of tasks have similar runtime expense.
@@ -39,13 +56,18 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
         let allowed_origin: String =
-            std::env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "localhost:3001".to_string());
+            std::env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "*".to_string());
 
         // create db connection pool
         let manager = ConnectionManager::<PgConnection>::new(database_url);
         let pool: lib_authentication::db::Pool = r2d2::Pool::builder()
             .build(manager)
             .expect("Failed to create pool.");
+
+        // let database_address = actix::SyncArbiter::start(num_cpus::get(), move || db::DbExecutor(pool.clone()));
+        // let state = AppState {
+        //     db: database_address.clone(),
+        // };
 
         let cors = Cors::default()
             .allowed_origin_fn(move |origin, _req_head| {
@@ -57,12 +79,14 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .app_data(web::Data::new(pool))
+            .wrap(IdentityMiddleware::default())
             .wrap(cors)
             .wrap(middleware::Logger::default())
             .wrap(lib_authentication::auth::middleware::Authentication::new(
                 lib_authentication::auth::SECRET_KEY.as_bytes(),
                 &routes::IGNORE_ROUTES,
             ))
+
             .configure(routes::config_services)
             .app_data(web::JsonConfig::default().limit(4096))
     })

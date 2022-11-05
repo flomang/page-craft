@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use crate::{email_service::send_invitation, models::Invitation};
+use crate::{email_service::send_invitation, models_bk::Invitation};
 use lib_authentication::db::Pool;
 use lib_authentication::errors::ServiceError;
 
