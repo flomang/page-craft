@@ -16,6 +16,9 @@ pub  static ref SECRET_KEY: String = std::env::var("SECRET_KEY").unwrap_or_else(
 //static ONE_WEEK: i64 = 60 * 60 * 24 * 7; // in seconds
 const ONE_DAY: i64 = 60 * 60 * 24; // in seconds
 
+pub static TOKEN: &str = "token";
+pub static AUTHORIATION: &str = "Authorization";
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Claims {
     // the subject will be the user_id
@@ -26,7 +29,7 @@ pub struct Claims {
 }
 
 pub fn unlock_request(request: &HttpRequest) -> Result<(Claims, String), ServiceError> {
-    let authen_header = match request.headers().get("Authorization") {
+    let authen_header = match request.headers().get(AUTHORIATION) {
         Some(authen_header) => authen_header,
         None => {
             return Err(ServiceError::BadRequest(
@@ -38,7 +41,7 @@ pub fn unlock_request(request: &HttpRequest) -> Result<(Claims, String), Service
     match authen_header.to_str() {
         Ok(authen_str) => {
 
-            if !authen_str.to_lowercase().starts_with("token") {
+            if !authen_str.to_lowercase().starts_with(TOKEN) {
                 return Err(ServiceError::Unauthorized);
             }
 

@@ -1,4 +1,3 @@
-use crate::auth::unlock_request;
 use crate::db::Pool;
 use actix_service::{Service, Transform};
 use actix_web::body::EitherBody;
@@ -18,6 +17,8 @@ use std::{
     pin::Pin,
     task::{Context, Poll},
 };
+
+use super::{AUTHORIATION, TOKEN};
 
 pub struct Authentication<'a> {
     secret: &'a [u8],
@@ -92,10 +93,10 @@ where
             if !authenticate_pass {
                 if let Some(pool) = req.app_data::<Data<Pool>>() {
                     log::info!("Connecting to database...");
-                    if let Some(authen_header) = req.headers().get("Authorization") {
+                    if let Some(authen_header) = req.headers().get(AUTHORIATION) {
                         log::info!("Parsing authorization header...");
                         if let Ok(authen_str) = authen_header.to_str() {
-                            if authen_str.to_lowercase().starts_with("token")
+                            if authen_str.to_lowercase().starts_with(TOKEN)
                             {
                                 log::info!("Parsing token...");
                                 let token = authen_str[5..authen_str.len()].trim();
@@ -118,11 +119,11 @@ where
         }
 
         // Don't forward to `/login` if we are already on `/login`.
-        if !authenticate_pass && req.path() != "api/login" {
+        if !authenticate_pass && req.path() != "api/users/login" {
             let (request, _pl) = req.into_parts();
 
             let response = HttpResponse::Found()
-                .insert_header((http::header::LOCATION, "api/login"))
+                .insert_header((http::header::LOCATION, "api/users/login"))
                 .finish()
                 // constructed responses map to "right" body
                 .map_into_right_body();
