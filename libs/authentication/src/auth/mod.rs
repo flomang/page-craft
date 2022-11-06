@@ -18,14 +18,14 @@ const ONE_DAY: i64 = 60 * 60 * 24; // in seconds
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Claims {
-    // the subject will be the user-id
+    // the subject will be the user_id
     pub sub: String,
     pub iat: i64,
     pub exp: i64,
     pub username: String,
 }
 
-pub fn unlock_request(request: &HttpRequest) -> Result<Claims, ServiceError> {
+pub fn unlock_request(request: &HttpRequest) -> Result<(Claims, String), ServiceError> {
     let authen_header = match request.headers().get("Authorization") {
         Some(authen_header) => authen_header,
         None => {
@@ -37,13 +37,14 @@ pub fn unlock_request(request: &HttpRequest) -> Result<Claims, ServiceError> {
 
     match authen_header.to_str() {
         Ok(authen_str) => {
-            if !authen_str.starts_with("bearer") && !authen_str.starts_with("Bearer") {
+
+            if !authen_str.to_lowercase().starts_with("token") {
                 return Err(ServiceError::Unauthorized);
             }
 
-            let raw_token = authen_str[6..authen_str.len()].trim();
+            let raw_token = authen_str[5..authen_str.len()].trim();
             let claims = validate_token(&raw_token.to_string(), SECRET_KEY.as_bytes())?;
-            Ok(claims)
+            Ok((claims, raw_token.to_owned()))
         }
         Err(err) => {
             log::error!("{}", err);

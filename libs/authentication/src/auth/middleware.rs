@@ -1,3 +1,4 @@
+use crate::auth::unlock_request;
 use crate::db::Pool;
 use actix_service::{Service, Transform};
 use actix_web::body::EitherBody;
@@ -94,10 +95,10 @@ where
                     if let Some(authen_header) = req.headers().get("Authorization") {
                         log::info!("Parsing authorization header...");
                         if let Ok(authen_str) = authen_header.to_str() {
-                            if authen_str.starts_with("bearer") || authen_str.starts_with("Bearer")
+                            if authen_str.to_lowercase().starts_with("token")
                             {
                                 log::info!("Parsing token...");
-                                let token = authen_str[6..authen_str.len()].trim();
+                                let token = authen_str[5..authen_str.len()].trim();
                                 if let Ok(token_data) =
                                     super::decode_token(token.to_string(), self.secret)
                                 {

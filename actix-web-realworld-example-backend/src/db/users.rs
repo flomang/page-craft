@@ -3,6 +3,7 @@ use crate::{
     models::{NewUser, User},
 };
 use diesel::prelude::*;
+use uuid::Uuid;
 use lib_authentication::auth::hash_password;
 use lib_authentication::errors::ServiceError;
 
@@ -39,4 +40,13 @@ pub fn verify_user(conn: &mut PgConnection, msg: LoginUser) -> Result<UserRespon
     }
 
     Err(ServiceError::Unauthorized)
+}
+
+
+pub fn find_user_by_id(conn: &mut PgConnection, user_id: Uuid) -> Result<UserResponse, ServiceError> {
+    use crate::schema::users::dsl::{users, id};
+
+    let user = users.filter(id.eq(user_id)).first::<User>(conn)?;
+
+    Ok(user.into())
 }

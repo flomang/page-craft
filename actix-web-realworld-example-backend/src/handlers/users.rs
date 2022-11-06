@@ -175,7 +175,7 @@ impl UserResponse {
 // Route handlers ↓
 
 /// Post new user
-pub async fn post_user(
+pub async fn register_user(
     params: web::Json<In<RegisterUser>>,
     state: web::Data<Pool>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -211,18 +211,6 @@ pub async fn login(
             })
             .await??;
 
-            // let token = lib_authentication::auth::create_jwt(user.id, user.username.clone())?;
-
-            // Identity::login(&req.extensions(), token.clone()).unwrap();
-
-            // let session = Session {
-            //     user_id: user.id,
-            //     email: user.email,
-            //     username: user.username,
-            //     avatar_url: user.image,
-            //     token,
-            // };
-
             Ok(HttpResponse::Ok().json(user))
         }
         Err(err) => Ok(HttpResponse::BadRequest().json(err)),
@@ -236,18 +224,26 @@ pub async fn logout(id: Identity) -> HttpResponse {
 }
 
 /// Get user
-pub async fn get_user(
+pub async fn get_current(
     request: HttpRequest,
-    pool: web::Data<Pool>,
+    state: web::Data<Pool>,
 ) -> Result<HttpResponse, ServiceError> {
     // must be logged in
-    let claims = lib_authentication::auth::unlock_request(&request)?;
-    let uid = uuid::Uuid::parse_str(&claims.sub).unwrap();
+    let (claims, token) = lib_authentication::auth::unlock_request(&request)?;
+    let user_id = uuid::Uuid::parse_str(&claims.sub).unwrap();
 
-    // let result = web::block(move || {
-    //     insert_invitation_and_send(uid, invitation_data.into_inner().email, pool)
-    // })
-    // .await??;
+    let mut response = web::block(move || {
+        let mut conn = state.get().unwrap();
+        crate::db::users::find_user_by_id(&mut conn, user_id)
+    })
+    .await??;
 
-    Ok(HttpResponse::Ok().json(""))
+    response.user.token = token;
+    Ok(HttpResponse::Ok().json(response))
 }
+
+
+//pub fn get_current(state: Data<AppState>, req: HttpRequest) -> impl Future<Item = HttpResponse, Error = Error> {
+//    authenticate(&state, &req)
+//        .and_then(|auth| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth))))
+//}
