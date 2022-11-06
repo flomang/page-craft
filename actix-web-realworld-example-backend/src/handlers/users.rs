@@ -1,5 +1,6 @@
 use actix_identity::Identity;
 use actix_web::{dev::Payload, web, Error, FromRequest, HttpMessage, HttpRequest, HttpResponse};
+use lib_authentication::auth::create_jwt;
 use lib_authentication::db::Pool;
 use lib_authentication::errors::ServiceError;
 use regex::Regex;
@@ -8,6 +9,7 @@ use std::convert::From;
 use std::future::{ready, Ready};
 use validator::Validate;
 
+use crate::models::User;
 use crate::prelude::*;
 
 lazy_static! {
@@ -33,6 +35,12 @@ impl FromRequest for LoggedUser {
 
         ready(Err(ServiceError::Unauthorized.into()))
     }
+}
+
+// wrapper to adhere to realworld spec
+#[derive(Debug, Deserialize)]
+pub struct In<U> {
+    user: U,
 }
 
 // Client Messages ↓
@@ -102,6 +110,13 @@ pub struct UpdateUser {
 }
 
 // JSON response objects ↓
+
+#[derive(Debug)]
+pub struct Auth {
+    pub user: User,
+    pub token: String,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Session {
     pub user_id: uuid::Uuid,
@@ -111,14 +126,60 @@ pub struct Session {
     pub token: String,
 }
 
+// JSON response objects ↓
+
+#[derive(Debug, Serialize)]
+pub struct UserResponse {
+    pub user: UserResponseInner,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserResponseInner {
+    pub email: String,
+    pub token: String,
+    pub username: String,
+    pub bio: Option<String>,
+    pub image: Option<String>,
+}
+
+impl From<User> for UserResponse {
+    fn from(user: User) -> Self {
+        UserResponse {
+            user: UserResponseInner {
+                token: create_jwt(user.id, user.username.clone()).unwrap(),
+                email: user.email,
+                username: user.username,
+                bio: user.bio,
+                image: user.image,
+            },
+        }
+    }
+}
+
+
+impl UserResponse {
+    fn create_with_auth(auth: Auth) -> Self {
+        UserResponse {
+            user: UserResponseInner {
+                token: auth.token,
+                email: auth.user.email,
+                username: auth.user.username,
+                bio: auth.user.bio,
+                image: auth.user.image,
+            },
+        }
+    }
+}
+
+
 // Route handlers ↓
 
 /// Post new user
 pub async fn post_user(
-    params: web::Json<RegisterUser>,
+    params: web::Json<In<RegisterUser>>,
     state: web::Data<Pool>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let register_user = params.into_inner();
+    let register_user = params.into_inner().user;
 
     match register_user.validate() {
         Ok(()) => {
@@ -137,10 +198,10 @@ pub async fn post_user(
 /// Login user
 pub async fn login(
     req: HttpRequest,
-    params: web::Json<LoginUser>,
+    params: web::Json<In<LoginUser>>,
     state: web::Data<Pool>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    let login_user = params.into_inner();
+    let login_user = params.into_inner().user;
 
     match login_user.validate() {
         Ok(()) => {
@@ -150,19 +211,19 @@ pub async fn login(
             })
             .await??;
 
-            let token = lib_authentication::auth::create_jwt(user.id, user.username.clone())?;
+            // let token = lib_authentication::auth::create_jwt(user.id, user.username.clone())?;
 
-            Identity::login(&req.extensions(), token.clone()).unwrap();
+            // Identity::login(&req.extensions(), token.clone()).unwrap();
 
-            let session = Session {
-                user_id: user.id,
-                email: user.email,
-                username: user.username,
-                avatar_url: user.image,
-                token,
-            };
+            // let session = Session {
+            //     user_id: user.id,
+            //     email: user.email,
+            //     username: user.username,
+            //     avatar_url: user.image,
+            //     token,
+            // };
 
-            Ok(HttpResponse::Ok().json(session))
+            Ok(HttpResponse::Ok().json(user))
         }
         Err(err) => Ok(HttpResponse::BadRequest().json(err)),
     }
@@ -172,4 +233,21 @@ pub async fn login(
 pub async fn logout(id: Identity) -> HttpResponse {
     id.logout();
     HttpResponse::NoContent().finish()
+}
+
+/// Get user
+pub async fn get_user(
+    request: HttpRequest,
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, ServiceError> {
+    // must be logged in
+    let claims = lib_authentication::auth::unlock_request(&request)?;
+    let uid = uuid::Uuid::parse_str(&claims.sub).unwrap();
+
+    // let result = web::block(move || {
+    //     insert_invitation_and_send(uid, invitation_data.into_inner().email, pool)
+    // })
+    // .await??;
+
+    Ok(HttpResponse::Ok().json(""))
 }

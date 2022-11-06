@@ -64,11 +64,6 @@ async fn main() -> std::io::Result<()> {
             .build(manager)
             .expect("Failed to create pool.");
 
-        // let database_address = actix::SyncArbiter::start(num_cpus::get(), move || db::DbExecutor(pool.clone()));
-        // let state = AppState {
-        //     db: database_address.clone(),
-        // };
-
         let cors = Cors::default()
             .allowed_origin_fn(move |origin, _req_head| {
                 origin.as_bytes().ends_with(allowed_origin.as_bytes())
@@ -79,8 +74,8 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .app_data(web::Data::new(pool))
-            .wrap(IdentityMiddleware::default())
             .wrap(cors)
+            .wrap(IdentityMiddleware::default())
             .wrap(middleware::Logger::default())
             .wrap(lib_authentication::auth::middleware::Authentication::new(
                 lib_authentication::auth::SECRET_KEY.as_bytes(),

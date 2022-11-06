@@ -1,5 +1,5 @@
 use crate::{
-    handlers::users::{LoginUser, RegisterUser},
+    handlers::users::{LoginUser, RegisterUser, UserResponse},
     models::{NewUser, User},
 };
 use diesel::prelude::*;
@@ -27,14 +27,14 @@ pub fn insert_new_user(conn: &mut PgConnection, msg: RegisterUser) -> Result<Use
 }
 
 /// Login user
-pub fn verify_user(conn: &mut PgConnection, msg: LoginUser) -> Result<User, ServiceError> {
+pub fn verify_user(conn: &mut PgConnection, msg: LoginUser) -> Result<UserResponse, ServiceError> {
     use crate::schema::users::dsl::{email, users};
 
     let user = users.filter(email.eq(&msg.email)).first::<User>(conn)?;
 
     if let Ok(matching) = lib_authentication::auth::verify(&user.password, &msg.password) {
         if matching {
-            return Ok(user);
+            return Ok(user.into());
         }
     }
 
