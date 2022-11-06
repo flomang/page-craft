@@ -4,23 +4,17 @@ extern crate diesel;
 extern crate lazy_static;
 #[macro_use]
 extern crate failure;
-#[macro_use]
-extern crate serde_json;
-
 extern crate chrono;
 extern crate dotenv;
 
-pub mod email_service;
-pub mod handlers;
-pub mod models_bk;
 mod db;
-mod routes;
-mod schema;
 mod error;
+mod handlers;
 mod models;
 mod prelude;
+mod routes;
+mod schema;
 
-use actix::Addr;
 use actix_identity::IdentityMiddleware;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -37,10 +31,6 @@ pub fn establish_connection() -> PgConnection {
 use actix_cors::Cors;
 use actix_web::{http, middleware, web, App, HttpServer};
 use diesel::r2d2::{self, ConnectionManager};
-
-pub struct AppState {
-    pub db: Addr<db::DbExecutor>,
-}
 
 // Tokio-based single-threaded async runtime for the Actix ecosystem.
 // To achieve similar performance to multi-threaded, work-stealing runtimes, applications using actix-rt will create multiple, mostly disconnected, single-threaded runtimes.
@@ -81,7 +71,6 @@ async fn main() -> std::io::Result<()> {
                 lib_authentication::auth::SECRET_KEY.as_bytes(),
                 &routes::IGNORE_ROUTES,
             ))
-
             .configure(routes::config_services)
             .app_data(web::JsonConfig::default().limit(4096))
     })

@@ -1,5 +1,5 @@
 use actix_identity::Identity;
-use actix_web::{dev::Payload, web, Error, FromRequest, HttpMessage, HttpRequest, HttpResponse};
+use actix_web::{dev::Payload, web, Error, FromRequest, HttpRequest, HttpResponse};
 use lib_authentication::auth::create_jwt;
 use lib_authentication::db::Pool;
 use lib_authentication::errors::ServiceError;
@@ -157,19 +157,19 @@ impl From<User> for UserResponse {
 }
 
 
-impl UserResponse {
-    fn create_with_auth(auth: Auth) -> Self {
-        UserResponse {
-            user: UserResponseInner {
-                token: auth.token,
-                email: auth.user.email,
-                username: auth.user.username,
-                bio: auth.user.bio,
-                image: auth.user.image,
-            },
-        }
-    }
-}
+// impl UserResponse {
+//     fn create_with_auth(auth: Auth) -> Self {
+//         UserResponse {
+//             user: UserResponseInner {
+//                 token: auth.token,
+//                 email: auth.user.email,
+//                 username: auth.user.username,
+//                 bio: auth.user.bio,
+//                 image: auth.user.image,
+//             },
+//         }
+//     }
+// }
 
 
 // Route handlers ↓
@@ -197,7 +197,6 @@ pub async fn register_user(
 
 /// Login user
 pub async fn login(
-    req: HttpRequest,
     params: web::Json<In<LoginUser>>,
     state: web::Data<Pool>,
 ) -> Result<HttpResponse, actix_web::Error> {
@@ -215,12 +214,6 @@ pub async fn login(
         }
         Err(err) => Ok(HttpResponse::BadRequest().json(err)),
     }
-}
-
-/// Logout user
-pub async fn logout(id: Identity) -> HttpResponse {
-    id.logout();
-    HttpResponse::NoContent().finish()
 }
 
 /// Get user
