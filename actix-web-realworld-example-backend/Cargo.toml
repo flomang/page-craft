@@ -3,6 +3,10 @@ name = "actix-web-realworld-example-backend"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
 [dependencies]
 lib-utils = { path = "../libs/utils" }
 lib-authentication = { path = "../libs/authentication" }

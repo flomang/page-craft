@@ -3,6 +3,7 @@ use crate::{
     models::{NewUser, User, UserChange},
 };
 use diesel::prelude::*;
+use serde_json::json;
 use uuid::Uuid;
 use lib_authentication::auth::hash_password;
 use lib_authentication::errors::ServiceError;
@@ -32,14 +33,11 @@ pub fn verify_user(conn: &mut PgConnection, msg: LoginUser) -> Result<UserRespon
     use crate::schema::users::dsl::{email, users};
 
     let user = users.filter(email.eq(&msg.email)).first::<User>(conn)?;
+    if lib_authentication::auth::verify(&user.password, &msg.password)? {
+       return Ok(user.into());
+    } 
 
-    if let Ok(matching) = lib_authentication::auth::verify(&user.password, &msg.password) {
-        if matching {
-            return Ok(user.into());
-        }
-    }
-
-    Err(ServiceError::Unauthorized)
+    Err(ServiceError::Unauthorized(json!("invalid password")))
 }
 
 

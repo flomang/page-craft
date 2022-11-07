@@ -1,7 +1,7 @@
 use crate::handlers::*;
 use actix_web::{web, HttpRequest};
 
-pub const IGNORE_ROUTES: [&str; 2] = ["/api/ping", "/api/users"];
+pub const IGNORE_ROUTES: [&str; 2] = ["/", "/api/users"];
 
 async fn index(_req: HttpRequest) -> &'static str {
     "ok!"
@@ -21,8 +21,8 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                      .route(web::get().to(users::get_current))
                      .route(web::put().to(users::update_user)),
             )
-            // // Profile routes ↓
-            // .service(web::resource("profiles/{username}").route(web::get().to_async(profiles::get)))
+            // Profile routes ↓
+            .service(web::resource("profiles/{username}").route(web::get().to(profiles::get_profile)))
             // .service(
             //     web::resource("profiles/{username}/follow")
             //         .route(web::post().to_async(profiles::follow))

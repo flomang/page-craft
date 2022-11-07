@@ -6,6 +6,7 @@ use argonautica::{Hasher, Verifier};
 use chrono::Utc;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use uuid::Uuid;
 
 pub mod middleware;
@@ -33,7 +34,7 @@ pub fn unlock_request(request: &HttpRequest) -> Result<(Claims, String), Service
         Some(authen_header) => authen_header,
         None => {
             return Err(ServiceError::BadRequest(
-                "no Authorization header".to_string(),
+                json!("no Authorization header".to_string())
             ));
         }
     };
@@ -42,11 +43,11 @@ pub fn unlock_request(request: &HttpRequest) -> Result<(Claims, String), Service
         Ok(authen_str) => {
 
             if !authen_str.to_lowercase().starts_with(TOKEN) {
-                return Err(ServiceError::Unauthorized);
+                return Err(ServiceError::Unauthorized(json!("token is invalid")));
             }
 
             let raw_token = authen_str[5..authen_str.len()].trim();
-            let claims = validate_token(&raw_token.to_string(), SECRET_KEY.as_bytes())?;
+            let claims = validate_token(&raw_token.to_string())?;
             Ok((claims, raw_token.to_owned()))
         }
         Err(err) => {
@@ -58,22 +59,22 @@ pub fn unlock_request(request: &HttpRequest) -> Result<(Claims, String), Service
 
 // Note: bearer_auth_validator returns Error instead of ServiceError
 // this is intentional to conform to HttpAuthentication::bearer sig.
-pub async fn bearer_auth_validator(
-    req: ServiceRequest,
-    credentials: BearerAuth,
-) -> Result<ServiceRequest, Error> {
-    let config = req
-        .app_data::<Config>()
-        .map(|data| data.clone())
-        .unwrap_or_else(Default::default);
+// pub async fn bearer_auth_validator(
+//     req: ServiceRequest,
+//     credentials: BearerAuth,
+// ) -> Result<ServiceRequest, Error> {
+//     let config = req
+//         .app_data::<Config>()
+//         .map(|data| data.clone())
+//         .unwrap_or_else(Default::default);
 
-    let key = std::env::var("JWT_KEY").unwrap_or_else(|_| "0123".repeat(8));
-    if let Ok(_) = validate_token(credentials.token(), &key.as_bytes()) {
-        Ok(req)
-    } else {
-        Err(AuthenticationError::from(config).into())
-    }
-}
+//     //let key = std::env::var("JWT_KEY").unwrap_or_else(|_| "0123".repeat(8));
+//     if let Ok(_) = validate_token(credentials.token(), SECRET_KEY.as_bytes()) {
+//         Ok(req)
+//     } else {
+//         Err(AuthenticationError::from(config).into())
+//     }
+// }
 
 pub fn decode_token(
     token: String,
@@ -98,14 +99,22 @@ pub fn verify_token(
     //}
 }
 
-pub fn validate_token(token: &str, secret: &[u8]) -> Result<Claims, ServiceError> {
+pub fn validate_token(token: &str) -> Result<Claims, ServiceError> {
     let validation = Validation::new(Algorithm::HS256);
 
     let data =
-        jsonwebtoken::decode::<Claims>(token, &DecodingKey::from_secret(secret), &validation)
-            .map_err(|err| {
-                dbg!(err);
-                ServiceError::Unauthorized
+        jsonwebtoken::decode::<Claims>(token, &DecodingKey::from_secret(SECRET_KEY.as_bytes()), &validation)
+            .map_err(|error| {
+                dbg!(error.clone());
+
+                match error.kind() {
+                    jsonwebtoken::errors::ErrorKind::ExpiredSignature => ServiceError::Unauthorized(json!({"error": "expired token"})),
+                    jsonwebtoken::errors::ErrorKind::InvalidIssuer => ServiceError::Unauthorized(json!({"error": "invalid issuer"})),
+                    jsonwebtoken::errors::ErrorKind::InvalidToken => ServiceError::Unauthorized(json!({"error": "invalid token"})),
+                    _ => ServiceError::Unauthorized(json!({
+                         "error": "An issue was found with the token provided",
+                    })),
+                }
             })?;
 
     Ok(data.claims)
@@ -152,6 +161,6 @@ pub fn verify(hash: &str, password: &str) -> Result<bool, ServiceError> {
         .verify()
         .map_err(|err| {
             dbg!(err);
-            ServiceError::Unauthorized
+            ServiceError::Unauthorized(json!({"error": "password is invalid"}))
         })
 }

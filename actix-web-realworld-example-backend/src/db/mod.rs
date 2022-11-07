@@ -6,6 +6,7 @@
 // };
 
 pub mod users;
+pub mod profiles;
 
 // pub type Conn = PgConnection;
 // pub type PgPool = Pool<ConnectionManager<Conn>>;
