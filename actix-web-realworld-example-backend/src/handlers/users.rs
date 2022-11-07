@@ -10,7 +10,7 @@ use std::future::{ready, Ready};
 use validator::Validate;
 
 use crate::models::User;
-use crate::prelude::*;
+//use crate::prelude::*;
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[_0-9a-zA-Z]+$").unwrap();
@@ -18,24 +18,24 @@ lazy_static! {
 
 // we need the same data
 // simple aliasing makes the intentions clear and its more readable
-pub type LoggedUser = crate::models::User;
+// pub type LoggedUser = crate::models::User;
 
-impl FromRequest for LoggedUser {
-    type Error = Error;
-    type Future = Ready<Result<LoggedUser, Error>>;
+// impl FromRequest for LoggedUser {
+//     type Error = Error;
+//     type Future = Ready<Result<LoggedUser, Error>>;
 
-    fn from_request(req: &HttpRequest, pl: &mut Payload) -> Self::Future {
-        if let Ok(identity) = Identity::from_request(req, pl).into_inner() {
-            if let Ok(user_json) = identity.id() {
-                if let Ok(user) = serde_json::from_str(&user_json) {
-                    return ready(Ok(user));
-                }
-            }
-        }
+//     fn from_request(req: &HttpRequest, pl: &mut Payload) -> Self::Future {
+//         if let Ok(identity) = Identity::from_request(req, pl).into_inner() {
+//             if let Ok(user_json) = identity.id() {
+//                 if let Ok(user) = serde_json::from_str(&user_json) {
+//                     return ready(Ok(user));
+//                 }
+//             }
+//         }
 
-        ready(Err(ServiceError::Unauthorized.into()))
-    }
-}
+//         ready(Err(ServiceError::Unauthorized.into()))
+//     }
+// }
 
 // wrapper to adhere to realworld spec
 #[derive(Debug, Deserialize)]

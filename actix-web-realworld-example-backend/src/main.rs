@@ -8,10 +8,10 @@ extern crate chrono;
 extern crate dotenv;
 
 mod db;
-mod error;
+//mod error;
 mod handlers;
 mod models;
-mod prelude;
+//mod prelude;
 mod routes;
 mod schema;
 
