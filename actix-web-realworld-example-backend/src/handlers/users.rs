@@ -1,12 +1,10 @@
-use actix_identity::Identity;
-use actix_web::{dev::Payload, web, Error, FromRequest, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use lib_authentication::auth::create_jwt;
 use lib_authentication::db::Pool;
 use lib_authentication::errors::ServiceError;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
-use std::future::{ready, Ready};
 use validator::Validate;
 
 use crate::models::User;
@@ -233,4 +231,28 @@ pub async fn get_current(
 
     response.user.token = token;
     Ok(HttpResponse::Ok().json(response))
+}
+
+/// Update user
+pub async fn update_user(
+    request: HttpRequest,
+    params: web::Json<In<UpdateUser>>,
+    state: web::Data<Pool>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let update_user = params.into_inner().user;
+    let (claims, _) = lib_authentication::auth::unlock_request(&request)?;
+    let user_id = uuid::Uuid::parse_str(&claims.sub).unwrap();
+
+    match update_user.validate() {
+        Ok(()) => {
+            let user = web::block(move || {
+                let mut conn = state.get().unwrap();
+                crate::db::users::update_user(&mut conn, user_id, update_user)
+            })
+            .await??;
+
+            Ok(HttpResponse::Ok().json(user))
+        }
+        Err(err) => Ok(HttpResponse::BadRequest().json(err)),
+    }
 }

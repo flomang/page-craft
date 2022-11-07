@@ -1,6 +1,6 @@
 use crate::{
-    handlers::users::{LoginUser, RegisterUser, UserResponse},
-    models::{NewUser, User},
+    handlers::users::{LoginUser, RegisterUser, UserResponse, UpdateUser},
+    models::{NewUser, User, UserChange},
 };
 use diesel::prelude::*;
 use uuid::Uuid;
@@ -43,6 +43,7 @@ pub fn verify_user(conn: &mut PgConnection, msg: LoginUser) -> Result<UserRespon
 }
 
 
+/// Find user by user id
 pub fn find_user_by_id(conn: &mut PgConnection, user_id: Uuid) -> Result<UserResponse, ServiceError> {
     use crate::schema::users::dsl::{users, id};
 
@@ -50,3 +51,28 @@ pub fn find_user_by_id(conn: &mut PgConnection, user_id: Uuid) -> Result<UserRes
 
     Ok(user.into())
 }
+
+/// Update user
+pub fn update_user(conn: &mut PgConnection, user_id: Uuid, msg: UpdateUser) ->Result<UserResponse, ServiceError> {
+    use crate::schema::users::dsl::users;
+
+    let updated_password = match msg.password {
+        Some(updated_password) => Some(hash_password(&updated_password)?),
+        None => None,
+    };
+
+    let updated_user = UserChange {
+        username: msg.username,
+        email: msg.email,
+        password: updated_password,
+        bio: msg.bio,
+        image: msg.image,
+    };
+
+    let user = diesel::update(users.find(user_id))
+        .set(&updated_user)
+        .get_result::<User>(conn)?;
+
+    Ok(user.into())
+
+} 

@@ -18,8 +18,8 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
             .service(web::resource("users/login").route(web::post().to(users::login)))
             .service(
                  web::resource("user")
-                     .route(web::get().to(users::get_current)),
-                     //.route(web::put().to_async(users::update)),
+                     .route(web::get().to(users::get_current))
+                     .route(web::put().to(users::update_user)),
             )
             // // Profile routes ↓
             // .service(web::resource("profiles/{username}").route(web::get().to_async(profiles::get)))
