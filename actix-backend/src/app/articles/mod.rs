@@ -1,5 +1,6 @@
 pub mod comments;
 use actix_web::{web::Data, web::Json, web::Path, web::Query, HttpRequest, HttpResponse};
+use futures::TryFutureExt;
 use validator::Validate;
 
 use super::AppState;
@@ -249,11 +250,15 @@ pub async fn list(
     state: Data<AppState>,
     (req, params): (HttpRequest, Query<ArticlesParams>),
 ) -> Result<HttpResponse, Error> {
-    let auth = authenticate(&state, &req).await?;
+    let auth = authenticate(&state, &req)
+        .await
+        .map(|auth| Some(auth))
+        .unwrap_or(None);
+
     let res = state
         .db
         .send(GetArticles {
-            auth: Some(auth),
+            auth,
             params: params.into_inner(),
         })
         .await??;

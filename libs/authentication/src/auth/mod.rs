@@ -1,7 +1,5 @@
 use crate::errors::ServiceError;
 use actix_web::{web, HttpRequest};
-//use actix_web_httpauth::extractors::bearer::{BearerAuth, Config};
-//use actix_web_httpauth::extractors::AuthenticationError;
 use argonautica::{Hasher, Verifier};
 use chrono::Utc;
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation};
