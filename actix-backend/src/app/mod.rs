@@ -23,7 +23,8 @@ async fn index(_state: Data<AppState>, _req: HttpRequest) -> &'static str {
     "Hello world!"
 }
 
-pub async fn start() -> std::io::Result<()> {
+#[actix_web::main]
+pub async fn start_server() -> std::io::Result<()> {
     let frontend_origin = env::var("FRONTEND_ORIGIN").ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -53,8 +54,7 @@ pub async fn start() -> std::io::Result<()> {
             .wrap(cors)
             .configure(routes)
     })
-    .bind(&bind_address)
-    .unwrap_or_else(|_| panic!("Could not bind server to address {}", &bind_address))
+    .bind(&bind_address)?
     .run()
     .await
 }

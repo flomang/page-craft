@@ -1,2 +1,2 @@
 [workspace]
-members = ["libs/*", "actix-web-realworld-example-backend"]
+members = ["libs/*",  "actix-backend"]

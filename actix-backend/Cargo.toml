@@ -1,7 +1,7 @@
 [package]
-name = "conduit"
+name = "actix-backend"
 version = "0.1.0"
-authors = ["grey <fairingrey@gmail.com>", "thaddeus <inbox.733@gmail.com"]
+authors = ["thaddeus"]
 edition = "2021"
 
 [dependencies]

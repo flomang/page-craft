@@ -1,5 +1,4 @@
 use actix_web::{error::BlockingError, error::ResponseError, HttpResponse};
-use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DieselError};
 use serde_json::{json, Value as JsonValue};
 use std::convert::From;
@@ -42,7 +41,6 @@ impl ResponseError for ServiceError {
             ServiceError::Unauthorized(ref message) => HttpResponse::Unauthorized().json(message),
             ServiceError::Forbidden(ref message) => HttpResponse::Forbidden().json(message),
             ServiceError::NotFound(ref message) => HttpResponse::NotFound().json(message),
-            //ServiceError::Unauthorized => HttpResponse::Unauthorized().json("Unauthorized"),
         }
     }
 }
