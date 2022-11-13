@@ -14,7 +14,6 @@ async function send({ method, path, data, token }) {
 		opts.headers['Authorization'] = `Token ${token}`;
 	}
 
-	console.log(path);
 	const res = await fetch(`${base}/${path}`, opts);
 	if (res.ok || res.status === 422) {
 		const text = await res.text();

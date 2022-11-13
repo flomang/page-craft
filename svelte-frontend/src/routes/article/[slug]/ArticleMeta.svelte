@@ -3,11 +3,16 @@
 
 	export let article;
 	export let user;
+
+	let profile_image = "https://api.realworld.io/images/smiley-cyrus.jpeg";
+	if (article.author.image != null) {
+		profile_image = article.author.image; 
+	}
 </script>
 
 <div class="article-meta">
 	<a href="/profile/@{article.author.username}">
-		<img src={article.author.image} alt={article.author.username} />
+		<img src={profile_image} alt={article.author.username} />
 	</a>
 
 	<div class="info">
@@ -23,7 +28,7 @@
 				<i class="ion-edit" /> Edit Article
 			</a>
 
-			<form use:enhance method="POST" action="?/deleteArticle">
+			<form style="display: inline" use:enhance method="POST" action="?/deleteArticle">
 				<button class="btn btn-outline-danger btn-sm">
 					<i class="ion-trash-a" /> Delete Article
 				</button>
