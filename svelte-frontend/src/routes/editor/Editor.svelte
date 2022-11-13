@@ -3,6 +3,7 @@
 	import { flip } from 'svelte/animate';
 	import { enhance } from '$app/forms';
 	import ListErrors from '$lib/ListErrors.svelte';
+	import Editor from '@tinymce/tinymce-svelte';
 
 	export let article;
 	export let errors;
@@ -35,12 +36,16 @@
 
 					<fieldset class="form-group">
 						<textarea
+						    hidden
 							name="body"
 							class="form-control"
 							rows="8"
 							placeholder="Write your article (in markdown)"
 							value={article.body}
 						/>
+						<Editor
+                            bind:value={article.body}
+                        />
 					</fieldset>
 
 					<fieldset class="form-group">
