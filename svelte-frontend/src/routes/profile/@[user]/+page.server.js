@@ -23,5 +23,10 @@ export const actions = {
 		if (result.errors) {
 			return invalid(422, result);
 		}
-	}
+	},
+
+	logout: async ({ cookies, locals }) => {
+		cookies.delete('jwt', { path: '/' });
+		locals.user = null;
+	},
 };

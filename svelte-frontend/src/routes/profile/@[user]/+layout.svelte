@@ -24,6 +24,9 @@
 					{/if}
 
 					{#if data.profile.username === data.user?.username}
+						<form use:enhance method="POST" action="?/logout">
+							<button class="btn btn-sm btn-outline-secondary action-btn">Logout</button>
+						</form>
 						<a href="/settings" class="btn btn-sm btn-outline-secondary action-btn">
 							<i class="ion-gear-a" />
 							Edit Profile Settings
