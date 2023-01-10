@@ -1,5 +1,8 @@
 import { invalid, redirect } from '@sveltejs/kit';
 import * as api from '$lib/api.js';
+import { goto } from '$app/navigation';
+import { page } from '$app/stores';
+
 
 export function load({ locals }) {
 	if (!locals.user) throw redirect(302, '/login');
@@ -32,5 +35,7 @@ export const actions = {
 		cookies.set('jwt', value, { path: '/' });
 
 		locals.user = body.user;
+		//console.log(`/profile/@${locals.user.username}`);
+		//redirect(302, `/profile/@${locals.user.username}`);
 	}
 };

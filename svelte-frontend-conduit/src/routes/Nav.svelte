@@ -17,11 +17,11 @@
 					</a>
 				</li>
 
-				<li class="nav-item">
+				<!-- <li class="nav-item">
 					<a href="/settings" class="nav-link" class:active={$page.url.pathname === '/settings'}>
 						<i class="ion-gear-a" />&nbsp;Settings
 					</a>
-				</li>
+				</li> -->
 
 				<li class="nav-item">
 					<a href="/profile/@{$page.data.user.username}" class="nav-link">

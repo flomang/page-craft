@@ -1,2 +1,3 @@
 [workspace]
-members = ["libs/*",  "actix-backend"]
+members = ["libs/*",  "actix-backend-conduit"]
+exclude = ["yew-frontend-conduit", "yew-frontend-craft"]

@@ -7,6 +7,7 @@
 
 	/** @type {import('./$types').ActionData} */
 	export let form;
+	
 </script>
 
 <svelte:head>
@@ -83,12 +84,6 @@
 
 						<button class="btn btn-lg btn-primary pull-xs-right">Update Settings</button>
 					</fieldset>
-				</form>
-
-				<hr />
-
-				<form use:enhance method="POST" action="?/logout">
-					<button class="btn btn-outline-danger">Or click here to logout.</button>
 				</form>
 			</div>
 		</div>
