@@ -1,13 +1,14 @@
 use crate::db::{new_pool, DbExecutor};
 use actix::prelude::{Addr, SyncArbiter};
 use actix_cors::Cors;
+use actix_http::header::ORIGIN;
 use actix_web::{
     guard,
     http::header::{AUTHORIZATION, CONTENT_TYPE},
     middleware::Logger,
     web,
     web::Data,
-    App, HttpRequest, HttpResponse, HttpServer, Result,
+    App, HttpResponse, HttpServer, Result,
 };
 use std::env;
 
@@ -16,7 +17,8 @@ pub mod profiles;
 pub mod tags;
 pub mod users;
 
-use crate::starwars::{QueryRoot, StarWars, StarWarsSchema};
+//use crate::starwars::{QueryRoot, StarWars, StarWarsSchema};
+use crate::blog::{QueryRoot, MutationRoot, BlogSchema};
 use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 
@@ -28,7 +30,7 @@ pub struct AppState {
 //    "Hello world!"
 //}
 
-async fn index(schema: web::Data<StarWarsSchema>, req: GraphQLRequest) -> GraphQLResponse {
+async fn index(schema: web::Data<BlogSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
 }
 
@@ -50,29 +52,30 @@ pub async fn start_server() -> std::io::Result<()> {
     let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
 
     HttpServer::new(move || {
-        let _state = AppState {
+        let state = AppState {
             db: database_address.clone(),
         };
-        let cors = match frontend_origin {
-            Some(ref origin) => Cors::default()
+        let _cors = match frontend_origin {
+            Some(ref origin) if origin != "*" => Cors::default()
                 .allowed_origin(origin)
                 .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
                 .max_age(3600),
-            None => Cors::default()
+            _ => Cors::default()
                 .send_wildcard()
-                .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE])
+                .allowed_headers(vec![AUTHORIZATION, CONTENT_TYPE, ORIGIN])
                 .max_age(3600),
         };
 
-        let schema = Schema::build(QueryRoot, EmptyMutation, EmptySubscription)
-        .data(StarWars::new())
+        let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
+        .data(state)
+        //.data(StarWars::new())
         .finish();
 
         App::new()
             //.app_data(Data::new(state))
             .app_data(Data::new(schema.clone()))
             .wrap(Logger::default())
-            .wrap(cors)
+            //.wrap(cors)
             .configure(routes)
     })
     .bind(&bind_address)?

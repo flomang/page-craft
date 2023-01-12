@@ -1,38 +1,43 @@
+use actix_web::HttpResponse;
+use async_graphql::*;
+use validator::Validate;
+
+use crate::app::{users::RegisterUser, AppState};
+
 pub struct QueryRoot;
 
-#[async_graphql::Object]
+#[Object]
 impl QueryRoot {
-    async fn posts(&self, ctx: &Context<'_>) -> Vec<Post> {
-        // Retrieve all the posts from the database
-        let connection = ctx.data::<DbConnection>().get().unwrap();
-        use schema::posts::dsl::*;
-        let results = posts.load::<Post>(connection).expect("Error loading posts");
-        results
-    }
-
-    async fn post(&self, id: i32, ctx: &Context<'_>) -> Option<Post> {
-        // Retrieve a specific post by ID from the database
-        let connection = ctx.data::<DbConnection>().get().unwrap();
-        use schema::posts::dsl::*;
-        let post = posts
-            .find(id)
-            .first::<Post>(connection)
-            .optional()
-            .expect("Error loading post");
-        post
+    /// Returns the sum of a and b
+    async fn add(&self, a: i32, b: i32) -> i32 {
+        a + b
     }
 }
 
-// Define the context
-struct Context {
-    data: web::Data<AppState>,
-    request: actix_web::web::Json<GraphQLRequest>,
-}
+pub struct MutationRoot;
 
-impl juniper::Context for Context {}
+#[Object]
+impl MutationRoot {
+    async fn signup<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        username: String,
+        email: String,
+        password: String,
+    ) -> Result<String> {
+        let register_user = RegisterUser {
+            username,
+            email,
+            password,
+        };
+        register_user.validate()?;
 
-#[derive(Deserialize)]
-struct AuthData {
-    username: String,
-    password: String,
+        let state = ctx.data_unchecked::<AppState>();
+        let res = state.db.send(register_user).await??;
+        Ok(serde_json::to_string(&res).unwrap())
+    }
+
+    async fn signin(&self, username: String, _password: String) -> Result<String> {
+        Ok(username)
+    }
 }
