@@ -2,7 +2,10 @@ use actix_web::HttpResponse;
 use async_graphql::*;
 use validator::Validate;
 
-use crate::app::{users::RegisterUser, AppState};
+use crate::app::{
+    users::{LoginUser, RegisterUser, UserResponse},
+    AppState,
+};
 
 pub struct QueryRoot;
 
@@ -24,7 +27,7 @@ impl MutationRoot {
         username: String,
         email: String,
         password: String,
-    ) -> Result<String> {
+    ) -> Result<UserResponse> {
         let register_user = RegisterUser {
             username,
             email,
@@ -34,10 +37,20 @@ impl MutationRoot {
 
         let state = ctx.data_unchecked::<AppState>();
         let res = state.db.send(register_user).await??;
-        Ok(serde_json::to_string(&res).unwrap())
+        Ok(res)
     }
 
-    async fn signin(&self, username: String, _password: String) -> Result<String> {
-        Ok(username)
+    async fn signin<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        email: String,
+        password: String,
+    ) -> Result<UserResponse> {
+        let login_user = LoginUser { email, password };
+        login_user.validate()?;
+
+        let state = ctx.data_unchecked::<AppState>();
+        let res = state.db.send(login_user).await??;
+        Ok(res)
     }
 }

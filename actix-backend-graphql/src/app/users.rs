@@ -94,10 +94,14 @@ pub struct UpdateUserOuter {
 
 // JSON response objects ↓
 
+#[derive(async_graphql::SimpleObject)]
+
 #[derive(Debug, Serialize)]
 pub struct UserResponse {
     pub user: UserResponseInner,
 }
+
+#[derive(async_graphql::SimpleObject)]
 
 #[derive(Debug, Serialize)]
 pub struct UserResponseInner {
