@@ -1,12 +1,13 @@
-use actix_web::HttpResponse;
+use actix_web::{HttpResponse, HttpRequest};
 use async_graphql::*;
 use validator::Validate;
 
-use crate::app::{
-    users::{LoginUser, RegisterUser, UserResponse},
+use crate::{app::{
+    users::{LoginUser, RegisterUser, UserResponse, UpdateUser, UpdateUserOuter},
     AppState,
-};
+}, utils::auth::{authenticate2}};
 
+pub struct Token(pub String);
 pub struct QueryRoot;
 
 #[Object]
@@ -51,6 +52,28 @@ impl MutationRoot {
 
         let state = ctx.data_unchecked::<AppState>();
         let res = state.db.send(login_user).await??;
+        Ok(res)
+    }
+
+    async fn update_user<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        username: Option<String>,
+        email: Option<String>,
+        password: Option<String>,
+        bio: Option<String>,
+        image: Option<String>,
+    ) -> Result<UserResponse> {
+        let update_user = UpdateUser { username, email, password, bio, image };
+        update_user.validate()?;
+
+        let state = ctx.data_unchecked::<AppState>();
+        let token =  ctx.data::<Token>()?.0.clone();
+        let auth = authenticate2(state, token).await?;
+        let res = state
+            .db
+            .send(UpdateUserOuter { auth, update_user })
+            .await??;
         Ok(res)
     }
 }

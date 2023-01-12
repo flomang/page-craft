@@ -1,14 +1,14 @@
-use crate::db::{new_pool, DbExecutor};
+use crate::{db::{new_pool, DbExecutor}, blog::Token};
 use actix::prelude::{Addr, SyncArbiter};
 use actix_cors::Cors;
-use actix_http::header::ORIGIN;
+use actix_http::header::{ORIGIN, HeaderMap};
 use actix_web::{
     guard,
     http::header::{AUTHORIZATION, CONTENT_TYPE},
     middleware::Logger,
     web,
     web::Data,
-    App, HttpResponse, HttpServer, Result,
+    App, HttpResponse, HttpServer, Result, HttpRequest,
 };
 use std::env;
 
@@ -30,9 +30,27 @@ pub struct AppState {
 //    "Hello world!"
 //}
 
-async fn index(schema: web::Data<BlogSchema>, req: GraphQLRequest) -> GraphQLResponse {
-    schema.execute(req.into_inner()).await.into()
+// async fn index(schema: web::Data<BlogSchema>, req: GraphQLRequest) -> GraphQLResponse {
+//     schema.execute(req.into_inner()).await.into()
+// }
+fn get_token_from_headers(headers: &HeaderMap) -> Option<Token> {
+    headers
+        .get("Token")
+        .and_then(|value| value.to_str().map(|s| Token(s.to_string())).ok())
 }
+
+async fn index(
+    schema: web::Data<BlogSchema>,
+    req: HttpRequest,
+    gql_request: GraphQLRequest,
+) -> GraphQLResponse {
+    let mut request = gql_request.into_inner();
+    if let Some(token) = get_token_from_headers(req.headers()) {
+        request = request.data(token);
+    }
+    schema.execute(request).await.into()
+}
+
 
 async fn index_graphiql() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok()

@@ -29,6 +29,16 @@ pub async fn authenticate(
     Ok(auth)
 }
 
+pub async fn authenticate2(
+    state: &AppState,
+    // req: &HttpRequest,
+    token: String,
+) -> Result<Auth, Error> {
+    //let token  = preprocess_authz_token(req.headers().get(AUTHORIZATION))?;
+    let auth = state.db.send(GenerateAuth { token }).await??;
+    Ok(auth)
+}
+
 fn preprocess_authz_token(token: Option<&HeaderValue>) -> Result<String> {
     let token = match token {
         Some(token) => token.to_str().unwrap(),
