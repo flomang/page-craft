@@ -95,14 +95,12 @@ pub struct UpdateUserOuter {
 // JSON response objects ↓
 
 #[derive(async_graphql::SimpleObject)]
-
 #[derive(Debug, Serialize)]
 pub struct UserResponse {
     pub user: UserResponseInner,
 }
 
 #[derive(async_graphql::SimpleObject)]
-
 #[derive(Debug, Serialize)]
 pub struct UserResponseInner {
     pub email: String,
@@ -127,7 +125,7 @@ impl From<User> for UserResponse {
 }
 
 impl UserResponse {
-    fn create_with_auth(auth: Auth) -> Self {
+    pub fn create_with_auth(auth: Auth) -> Self {
         UserResponse {
             user: UserResponseInner {
                 token: auth.token,

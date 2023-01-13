@@ -1,14 +1,17 @@
-use crate::{db::{new_pool, DbExecutor}, blog::Token};
+use crate::{
+    blog::Token,
+    db::{new_pool, DbExecutor},
+};
 use actix::prelude::{Addr, SyncArbiter};
 use actix_cors::Cors;
-use actix_http::header::{ORIGIN, HeaderMap};
+use actix_http::header::{HeaderMap, ORIGIN};
 use actix_web::{
     guard,
     http::header::{AUTHORIZATION, CONTENT_TYPE},
     middleware::Logger,
     web,
     web::Data,
-    App, HttpResponse, HttpServer, Result, HttpRequest,
+    App, HttpRequest, HttpResponse, HttpServer, Result,
 };
 use std::env;
 
@@ -18,8 +21,8 @@ pub mod tags;
 pub mod users;
 
 //use crate::starwars::{QueryRoot, StarWars, StarWarsSchema};
-use crate::blog::{QueryRoot, MutationRoot, BlogSchema};
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
+use crate::blog::{BlogSchema, MutationRoot, QueryRoot};
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema, Context};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 
 pub struct AppState {
@@ -51,7 +54,6 @@ async fn index(
     schema.execute(request).await.into()
 }
 
-
 async fn index_graphiql() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
@@ -73,6 +75,7 @@ pub async fn start_server() -> std::io::Result<()> {
         let state = AppState {
             db: database_address.clone(),
         };
+
         let _cors = match frontend_origin {
             Some(ref origin) if origin != "*" => Cors::default()
                 .allowed_origin(origin)
@@ -85,12 +88,10 @@ pub async fn start_server() -> std::io::Result<()> {
         };
 
         let schema = Schema::build(QueryRoot, MutationRoot, EmptySubscription)
-        .data(state)
-        //.data(StarWars::new())
-        .finish();
+            .data(state)
+            .finish();
 
         App::new()
-            //.app_data(Data::new(state))
             .app_data(Data::new(schema.clone()))
             .wrap(Logger::default())
             //.wrap(cors)

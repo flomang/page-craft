@@ -1,20 +1,26 @@
-use actix_web::{HttpResponse, HttpRequest};
 use async_graphql::*;
 use validator::Validate;
 
 use crate::{app::{
     users::{LoginUser, RegisterUser, UserResponse, UpdateUser, UpdateUserOuter},
     AppState,
-}, utils::auth::{authenticate2}};
+}, utils::auth::{authenticate_token}};
 
 pub struct Token(pub String);
 pub struct QueryRoot;
 
 #[Object]
 impl QueryRoot {
-    /// Returns the sum of a and b
-    async fn add(&self, a: i32, b: i32) -> i32 {
-        a + b
+
+    // get the current logged in user by token
+    async fn get_current_user<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+    ) -> Result<UserResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token =  ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+        Ok(UserResponse::create_with_auth(auth))
     }
 }
 
@@ -22,6 +28,8 @@ pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
+
+    // register a new user
     async fn signup<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -41,6 +49,7 @@ impl MutationRoot {
         Ok(res)
     }
 
+    // login a user
     async fn signin<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -55,6 +64,7 @@ impl MutationRoot {
         Ok(res)
     }
 
+    // update a user
     async fn update_user<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -69,7 +79,7 @@ impl MutationRoot {
 
         let state = ctx.data_unchecked::<AppState>();
         let token =  ctx.data::<Token>()?.0.clone();
-        let auth = authenticate2(state, token).await?;
+        let auth = authenticate_token(state, token).await?;
         let res = state
             .db
             .send(UpdateUserOuter { auth, update_user })
