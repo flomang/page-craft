@@ -22,6 +22,7 @@ pub struct ArticlePath {
     pub slug: String,
 }
 
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Deserialize)]
 pub struct ArticlesParams {
     pub tag: Option<String>,
@@ -117,10 +118,12 @@ pub struct GetFeed {
 // JSON response objects ↓
 
 #[derive(Debug, Serialize)]
+#[derive(async_graphql::SimpleObject)]
 pub struct ArticleResponse {
     pub article: ArticleResponseInner,
 }
 
+#[derive(async_graphql::SimpleObject)]
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArticleResponseInner {
@@ -136,6 +139,7 @@ pub struct ArticleResponseInner {
     pub author: ProfileResponseInner,
 }
 
+#[derive(async_graphql::SimpleObject)]
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArticleListResponse {

@@ -4,7 +4,11 @@ use crate::{
 };
 use async_graphql::*;
 
-use super::{Token, profiles::{GetProfile, ProfileResponse}};
+use super::{
+    articles::{ArticleResponse, GetArticle, ArticlesParams, GetArticles, ArticleListResponse},
+    profiles::{GetProfile, ProfileResponse},
+    Token,
+};
 
 pub struct QueryRoot;
 
@@ -31,13 +35,43 @@ impl QueryRoot {
             .map(|auth| Some(auth))
             .unwrap_or(None);
 
-        let res = state
-            .db
-            .send(GetProfile {
-                auth,
-                username,
-            })
-            .await??;
+        let res = state.db.send(GetProfile { auth, username }).await??;
+
+        Ok(res)
+    }
+
+    // get articles
+    async fn get_article<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+    ) -> Result<ArticleResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token)
+            .await
+            .map(|auth| Some(auth))
+            .unwrap_or(None);
+
+        let res = state.db.send(GetArticle { auth, slug }).await??;
+
+        Ok(res)
+    }
+
+    // get articles
+    async fn get_articles<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        filter: ArticlesParams,
+    ) -> Result<ArticleListResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token)
+            .await
+            .map(|auth| Some(auth))
+            .unwrap_or(None);
+
+        let res = state.db.send(GetArticles { auth, params: filter }).await??;
 
         Ok(res)
     }

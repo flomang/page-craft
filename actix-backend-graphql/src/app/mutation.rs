@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     profiles::{FollowProfile, ProfileResponse, UnfollowProfile},
-    Token,
+    Token, articles::{ArticleResponse, CreateArticle, CreateArticleOuter},
 };
 pub struct MutationRoot;
 
@@ -107,6 +107,35 @@ impl MutationRoot {
         let auth = authenticate_token(state, token).await?;
 
         let res = state.db.send(UnfollowProfile { auth, username }).await??;
+
+        Ok(res)
+    }
+
+    // create article
+    async fn create_acticle<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        title: String,
+        description: String,
+        body: String,
+        tag_list: Vec<String>,
+    ) -> Result<ArticleResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+
+        let article = CreateArticle {
+            title,
+            description,
+            body,
+            tag_list,
+        };
+        article.validate()?;
+
+        let res = state
+            .db
+            .send(CreateArticleOuter { auth, article })
+            .await??;
 
         Ok(res)
     }

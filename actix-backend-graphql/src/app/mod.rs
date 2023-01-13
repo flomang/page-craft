@@ -107,13 +107,6 @@ fn routes(app: &mut web::ServiceConfig) {
 
     // app.service(web::resource("/").to(index)).service(
     //     web::scope("/api")
-    //         // Profile routes ↓
-    //         .service(web::resource("profiles/{username}").route(web::get().to(profiles::get)))
-    //         .service(
-    //             web::resource("profiles/{username}/follow")
-    //                 .route(web::post().to(profiles::follow))
-    //                 .route(web::delete().to(profiles::unfollow)),
-    //         )
     //         // Article routes ↓
     //         .service(
     //             web::resource("articles")

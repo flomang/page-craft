@@ -12,3 +12,13 @@ impl Serialize for CustomDateTime {
         serializer.serialize_str(&s.to_string())
     }
 }
+
+use async_graphql::*;
+#[Scalar]
+impl ScalarType for CustomDateTime {
+  fn parse(value: Value) -> InputValueResult<Self> { todo!() } 
+
+  fn to_value(&self) -> Value {
+    Value::String(self.0.format("%Y-%m-%dT%H:%M:%S.%3fZ").to_string())
+  }
+}
