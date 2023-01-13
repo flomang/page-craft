@@ -107,14 +107,6 @@ fn routes(app: &mut web::ServiceConfig) {
 
     // app.service(web::resource("/").to(index)).service(
     //     web::scope("/api")
-    //         // User routes ↓
-    //         .service(web::resource("users").route(web::post().to(users::register)))
-    //         .service(web::resource("users/login").route(web::post().to(users::login)))
-    //         .service(
-    //             web::resource("user")
-    //                 .route(web::get().to(users::get_current))
-    //                 .route(web::put().to(users::update)),
-    //         )
     //         // Profile routes ↓
     //         .service(web::resource("profiles/{username}").route(web::get().to(profiles::get)))
     //         .service(

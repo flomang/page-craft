@@ -1,13 +1,10 @@
-use actix_web::{web::Data, web::Json, HttpRequest, HttpResponse};
 use regex::Regex;
 use std::convert::From;
 use validator::Validate;
 
-use super::AppState;
 use crate::models::User;
-use crate::prelude::*;
 use crate::utils::{
-    auth::{authenticate, Auth},
+    auth::Auth,
     jwt::CanGenerateJwt,
 };
 
@@ -136,47 +133,4 @@ impl UserResponse {
             },
         }
     }
-}
-
-// Route handlers ↓
-
-pub async fn register(
-    (form, state): (Json<In<RegisterUser>>, Data<AppState>),
-) -> Result<HttpResponse, Error> {
-    let register_user = form.into_inner().user;
-    register_user.validate()?;
-
-    let res = state.db.send(register_user).await??;
-    Ok(HttpResponse::Ok().json(res))
-}
-
-pub async fn login(
-    (form, state): (Json<In<LoginUser>>, Data<AppState>),
-) -> Result<HttpResponse, Error> {
-    let login_user = form.into_inner().user;
-    login_user.validate()?;
-
-    let res = state.db.send(login_user).await??;
-    Ok(HttpResponse::Ok().json(res))
-}
-
-pub async fn get_current(state: Data<AppState>, req: HttpRequest) -> Result<HttpResponse, Error> {
-    authenticate(&state, &req)
-        .await
-        .and_then(|auth| Ok(HttpResponse::Ok().json(UserResponse::create_with_auth(auth))))
-}
-
-pub async fn update(
-    state: Data<AppState>,
-    (form, req): (Json<In<UpdateUser>>, HttpRequest),
-) -> Result<HttpResponse, Error> {
-    let update_user = form.into_inner().user;
-    update_user.validate()?;
-
-    let auth = authenticate(&state, &req).await?;
-    let res = state
-        .db
-        .send(UpdateUserOuter { auth, update_user })
-        .await??;
-    Ok(HttpResponse::Ok().json(res))
 }

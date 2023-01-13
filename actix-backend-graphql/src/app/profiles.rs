@@ -35,11 +35,13 @@ pub struct UnfollowProfile {
 // JSON response objects ↓
 
 #[derive(Debug, Serialize)]
+#[derive(async_graphql::SimpleObject)]
 pub struct ProfileResponse {
     pub profile: ProfileResponseInner,
 }
 
 #[derive(Debug, Serialize)]
+#[derive(async_graphql::SimpleObject)]
 pub struct ProfileResponseInner {
     pub username: String,
     pub bio: Option<String>,
