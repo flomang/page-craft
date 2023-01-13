@@ -1,17 +1,22 @@
 use async_graphql::*;
 use validator::Validate;
 
-use crate::{app::{
-    users::{LoginUser, RegisterUser, UserResponse, UpdateUser, UpdateUserOuter},
-    AppState,
-}, utils::auth::{authenticate_token}};
+use crate::{
+    app::{
+        users::{LoginUser, RegisterUser, UpdateUser, UpdateUserOuter, UserResponse},
+        AppState,
+    },
+    utils::auth::authenticate_token,
+};
 
-use super::Token;
+use super::{
+    profiles::{FollowProfile, ProfileResponse, UnfollowProfile},
+    Token,
+};
 pub struct MutationRoot;
 
 #[Object]
 impl MutationRoot {
-
     // register a new user
     async fn signup<'ctx>(
         &self,
@@ -57,16 +62,52 @@ impl MutationRoot {
         bio: Option<String>,
         image: Option<String>,
     ) -> Result<UserResponse> {
-        let update_user = UpdateUser { username, email, password, bio, image };
+        let update_user = UpdateUser {
+            username,
+            email,
+            password,
+            bio,
+            image,
+        };
         update_user.validate()?;
 
         let state = ctx.data_unchecked::<AppState>();
-        let token =  ctx.data::<Token>()?.0.clone();
+        let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
         let res = state
             .db
             .send(UpdateUserOuter { auth, update_user })
             .await??;
+        Ok(res)
+    }
+
+    // follow a user
+    async fn follow_user<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        username: String,
+    ) -> Result<ProfileResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+
+        let res = state.db.send(FollowProfile { auth, username }).await??;
+
+        Ok(res)
+    }
+
+    // unfollow a user
+    async fn unfollow_user<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        username: String,
+    ) -> Result<ProfileResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+
+        let res = state.db.send(UnfollowProfile { auth, username }).await??;
+
         Ok(res)
     }
 }

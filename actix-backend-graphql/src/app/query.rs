@@ -18,6 +18,7 @@ impl QueryRoot {
         Ok(UserResponse::create_with_auth(auth))
     }
 
+    // get profile for username
     async fn get_profile<'ctx>(
         &self,
         ctx: &Context<'ctx>,
