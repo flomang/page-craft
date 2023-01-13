@@ -6,24 +6,7 @@ use crate::{app::{
     AppState,
 }, utils::auth::{authenticate_token}};
 
-pub struct Token(pub String);
-pub struct QueryRoot;
-
-#[Object]
-impl QueryRoot {
-
-    // get the current logged in user by token
-    async fn get_current_user<'ctx>(
-        &self,
-        ctx: &Context<'ctx>,
-    ) -> Result<UserResponse> {
-        let state = ctx.data_unchecked::<AppState>();
-        let token =  ctx.data::<Token>()?.0.clone();
-        let auth = authenticate_token(state, token).await?;
-        Ok(UserResponse::create_with_auth(auth))
-    }
-}
-
+use super::Token;
 pub struct MutationRoot;
 
 #[Object]

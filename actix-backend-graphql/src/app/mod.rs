@@ -1,5 +1,11 @@
+pub mod articles;
+pub mod profiles;
+pub mod tags;
+pub mod users;
+mod mutation;
+mod query;
+
 use crate::{
-    blog::Token,
     db::{new_pool, DbExecutor},
 };
 use actix::prelude::{Addr, SyncArbiter};
@@ -14,28 +20,19 @@ use actix_web::{
     App, HttpRequest, HttpResponse, HttpServer, Result,
 };
 use std::env;
-
-pub mod articles;
-pub mod profiles;
-pub mod tags;
-pub mod users;
-
-//use crate::starwars::{QueryRoot, StarWars, StarWarsSchema};
-use crate::blog::{BlogSchema, MutationRoot, QueryRoot};
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema, Context};
+use async_graphql::{http::GraphiQLSource, EmptySubscription, Schema};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use query::QueryRoot;
+use mutation::MutationRoot;
+
+pub struct Token(pub String);
+
+pub type GraphqlSchema = Schema<QueryRoot, MutationRoot, EmptySubscription>;
 
 pub struct AppState {
     pub db: Addr<DbExecutor>,
 }
 
-//async fn index(_state: Data<AppState>, _req: HttpRequest) -> &'static str {
-//    "Hello world!"
-//}
-
-// async fn index(schema: web::Data<BlogSchema>, req: GraphQLRequest) -> GraphQLResponse {
-//     schema.execute(req.into_inner()).await.into()
-// }
 fn get_token_from_headers(headers: &HeaderMap) -> Option<Token> {
     headers
         .get("Token")
@@ -43,7 +40,7 @@ fn get_token_from_headers(headers: &HeaderMap) -> Option<Token> {
 }
 
 async fn index(
-    schema: web::Data<BlogSchema>,
+    schema: web::Data<GraphqlSchema>,
     req: HttpRequest,
     gql_request: GraphQLRequest,
 ) -> GraphQLResponse {

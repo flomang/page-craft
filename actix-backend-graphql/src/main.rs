@@ -64,7 +64,6 @@ extern crate serde_derive;
 extern crate serde_json;
 
 mod app;
-mod blog;
 mod db;
 mod error;
 mod models;
