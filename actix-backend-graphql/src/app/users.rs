@@ -18,7 +18,7 @@ pub struct In<U> {
 }
 
 // Client Messages ↓
-
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Validate, Deserialize)]
 pub struct RegisterUser {
     #[validate(
@@ -43,6 +43,7 @@ pub struct RegisterUser {
     pub password: String,
 }
 
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Validate, Deserialize)]
 pub struct LoginUser {
     #[validate(email(message = "fails validation - is not a valid email address"))]
@@ -55,6 +56,8 @@ pub struct LoginUser {
     pub password: String,
 }
 
+
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Validate, Deserialize)]
 pub struct UpdateUser {
     #[validate(

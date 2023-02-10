@@ -41,6 +41,7 @@ pub struct FeedParams {
 
 // Client Messages ↓
 
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateArticle {

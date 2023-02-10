@@ -24,19 +24,12 @@ impl MutationRoot {
     async fn signup<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        username: String,
-        email: String,
-        password: String,
+        params: RegisterUser,
     ) -> Result<UserResponse> {
-        let register_user = RegisterUser {
-            username,
-            email,
-            password,
-        };
-        register_user.validate()?;
+        params.validate()?;
 
         let state = ctx.data_unchecked::<AppState>();
-        let res = state.db.send(register_user).await??;
+        let res = state.db.send(params).await??;
         Ok(res)
     }
 
@@ -44,14 +37,12 @@ impl MutationRoot {
     async fn signin<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        email: String,
-        password: String,
+        params: LoginUser,
     ) -> Result<UserResponse> {
-        let login_user = LoginUser { email, password };
-        login_user.validate()?;
+        params.validate()?;
 
         let state = ctx.data_unchecked::<AppState>();
-        let res = state.db.send(login_user).await??;
+        let res = state.db.send(params).await??;
         Ok(res)
     }
 
@@ -59,27 +50,16 @@ impl MutationRoot {
     async fn update_user<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        username: Option<String>,
-        email: Option<String>,
-        password: Option<String>,
-        bio: Option<String>,
-        image: Option<String>,
+        params: UpdateUser, 
     ) -> Result<UserResponse> {
-        let update_user = UpdateUser {
-            username,
-            email,
-            password,
-            bio,
-            image,
-        };
-        update_user.validate()?;
+        params.validate()?;
 
         let state = ctx.data_unchecked::<AppState>();
         let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
         let res = state
             .db
-            .send(UpdateUserOuter { auth, update_user })
+            .send(UpdateUserOuter { auth, update_user: params })
             .await??;
         Ok(res)
     }
@@ -93,9 +73,7 @@ impl MutationRoot {
         let state = ctx.data_unchecked::<AppState>();
         let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
-
         let res = state.db.send(FollowProfile { auth, username }).await??;
-
         Ok(res)
     }
 
@@ -108,9 +86,7 @@ impl MutationRoot {
         let state = ctx.data_unchecked::<AppState>();
         let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
-
         let res = state.db.send(UnfollowProfile { auth, username }).await??;
-
         Ok(res)
     }
 
@@ -118,26 +94,16 @@ impl MutationRoot {
     async fn create_acticle<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        title: String,
-        description: String,
-        body: String,
-        tag_list: Vec<String>,
+        params: CreateArticle,
     ) -> Result<ArticleResponse> {
+        params.validate()?;
+
         let state = ctx.data_unchecked::<AppState>();
         let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
-
-        let article = CreateArticle {
-            title,
-            description,
-            body,
-            tag_list,
-        };
-        article.validate()?;
-
         let res = state
             .db
-            .send(CreateArticleOuter { auth, article })
+            .send(CreateArticleOuter { auth, article: params })
             .await??;
 
         Ok(res)
@@ -150,11 +116,11 @@ impl MutationRoot {
         slug: String,
         params: UpdateArticle,
     ) -> Result<ArticleResponse> {
+        params.validate()?;
+
         let state = ctx.data_unchecked::<AppState>();
         let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
-        params.validate()?;
-
         let res = state
             .db
             .send(UpdateArticleOuter {
@@ -184,7 +150,6 @@ impl MutationRoot {
                 slug,
             })
             .await??;
-
         Ok(true)
     }
 }
