@@ -107,13 +107,6 @@ fn routes(app: &mut web::ServiceConfig)  {
     // app.service(web::resource("/").to(index)).service(
     //     web::scope("/api")
     //         // Article routes ↓
-    //         .service(web::resource("articles/feed").route(web::get().to(articles::feed)))
-    //         .service(
-    //             web::resource("articles/{slug}")
-    //                 .route(web::get().to(articles::get))
-    //                 .route(web::put().to(articles::update))
-    //                 .route(web::delete().to(articles::delete)),
-    //         )
     //         .service(
     //             web::resource("articles/{slug}/favorite")
     //                 .route(web::post().to(articles::favorite))

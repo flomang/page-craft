@@ -10,8 +10,11 @@ use crate::{
 };
 
 use super::{
+    articles::{
+        ArticleResponse, CreateArticle, CreateArticleOuter, UpdateArticle, UpdateArticleOuter, DeleteArticle,
+    },
     profiles::{FollowProfile, ProfileResponse, UnfollowProfile},
-    Token, articles::{ArticleResponse, CreateArticle, CreateArticleOuter},
+    Token,
 };
 pub struct MutationRoot;
 
@@ -138,5 +141,50 @@ impl MutationRoot {
             .await??;
 
         Ok(res)
+    }
+
+    // update article
+    async fn update_acticle<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+        params: UpdateArticle,
+    ) -> Result<ArticleResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+        params.validate()?;
+
+        let res = state
+            .db
+            .send(UpdateArticleOuter {
+                auth,
+                slug,
+                article: params,
+            })
+            .await??;
+
+        Ok(res)
+    }
+
+    // update article
+    async fn delete_acticle<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+    ) -> Result<bool> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+
+        state
+            .db
+            .send(DeleteArticle {
+                auth,
+                slug,
+            })
+            .await??;
+
+        Ok(true)
     }
 }

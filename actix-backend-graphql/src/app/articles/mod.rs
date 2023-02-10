@@ -66,6 +66,7 @@ pub struct GetArticle {
     pub slug: String,
 }
 
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Validate, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateArticle {
