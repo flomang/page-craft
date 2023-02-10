@@ -11,7 +11,8 @@ use crate::{
 
 use super::{
     articles::{
-        ArticleResponse, CreateArticle, CreateArticleOuter, UpdateArticle, UpdateArticleOuter, DeleteArticle,
+        ArticleResponse, CreateArticle, CreateArticleOuter, DeleteArticle, FavoriteArticle,
+        UpdateArticle, UpdateArticleOuter, UnfavoriteArticle, comments::{AddCommentOuter, AddComment, CommentResponse, DeleteComment},
     },
     profiles::{FollowProfile, ProfileResponse, UnfollowProfile},
     Token,
@@ -34,11 +35,7 @@ impl MutationRoot {
     }
 
     // login a user
-    async fn signin<'ctx>(
-        &self,
-        ctx: &Context<'ctx>,
-        params: LoginUser,
-    ) -> Result<UserResponse> {
+    async fn signin<'ctx>(&self, ctx: &Context<'ctx>, params: LoginUser) -> Result<UserResponse> {
         params.validate()?;
 
         let state = ctx.data_unchecked::<AppState>();
@@ -50,7 +47,7 @@ impl MutationRoot {
     async fn update_user<'ctx>(
         &self,
         ctx: &Context<'ctx>,
-        params: UpdateUser, 
+        params: UpdateUser,
     ) -> Result<UserResponse> {
         params.validate()?;
 
@@ -59,7 +56,10 @@ impl MutationRoot {
         let auth = authenticate_token(state, token).await?;
         let res = state
             .db
-            .send(UpdateUserOuter { auth, update_user: params })
+            .send(UpdateUserOuter {
+                auth,
+                update_user: params,
+            })
             .await??;
         Ok(res)
     }
@@ -103,7 +103,10 @@ impl MutationRoot {
         let auth = authenticate_token(state, token).await?;
         let res = state
             .db
-            .send(CreateArticleOuter { auth, article: params })
+            .send(CreateArticleOuter {
+                auth,
+                article: params,
+            })
             .await??;
 
         Ok(res)
@@ -134,22 +137,74 @@ impl MutationRoot {
     }
 
     // update article
-    async fn delete_acticle<'ctx>(
+    async fn delete_acticle<'ctx>(&self, ctx: &Context<'ctx>, slug: String) -> Result<bool> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+        state.db.send(DeleteArticle { auth, slug }).await??;
+        Ok(true)
+    }
+
+    // favorite article
+    async fn favorite_acticle<'ctx>(
         &self,
         ctx: &Context<'ctx>,
         slug: String,
+    ) -> Result<ArticleResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+        let res = state.db.send(FavoriteArticle { auth, slug }).await??;
+        Ok(res)
+    }
+
+    // unfavorite article
+    async fn unfavorite_acticle<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+    ) -> Result<ArticleResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+        let res = state.db.send(UnfavoriteArticle { auth, slug }).await??;
+        Ok(res)
+    }
+
+    // add comment to article
+    async fn add_comment<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+        comment: AddComment,
+    ) -> Result<CommentResponse> {
+        comment.validate()?;
+
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+        let res = state
+            .db
+            .send(AddCommentOuter {
+                auth,
+                slug,
+                comment
+            })
+            .await??;
+        Ok(res)
+    }
+
+    // delete comment from article
+    async fn delete_comment<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+        comment_id: i32,
     ) -> Result<bool> {
         let state = ctx.data_unchecked::<AppState>();
         let token = ctx.data::<Token>()?.0.clone();
         let auth = authenticate_token(state, token).await?;
-
-        state
-            .db
-            .send(DeleteArticle {
-                auth,
-                slug,
-            })
-            .await??;
+        state.db.send(DeleteComment { auth, slug, comment_id }).await??;
         Ok(true)
     }
 }

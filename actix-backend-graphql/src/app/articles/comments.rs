@@ -26,6 +26,7 @@ pub struct ArticleCommentPath {
 
 // Client Messages ↓
 
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Validate, Deserialize)]
 pub struct AddComment {
     #[validate(length(min = 1, message = "fails validation - cannot be empty"))]
@@ -54,11 +55,13 @@ pub struct DeleteComment {
 
 // JSON response objects ↓
 
+#[derive(async_graphql::SimpleObject)]
 #[derive(Debug, Serialize)]
 pub struct CommentResponse {
     pub comment: CommentResponseInner,
 }
 
+#[derive(async_graphql::SimpleObject)]
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommentResponseInner {
@@ -69,6 +72,7 @@ pub struct CommentResponseInner {
     pub author: ProfileResponseInner,
 }
 
+#[derive(async_graphql::SimpleObject)]
 #[derive(Debug, Serialize)]
 pub struct CommentListResponse {
     pub comments: Vec<CommentResponseInner>,

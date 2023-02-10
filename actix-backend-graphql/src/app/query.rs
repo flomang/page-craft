@@ -5,9 +5,9 @@ use crate::{
 use async_graphql::*;
 
 use super::{
-    articles::{ArticleListResponse, ArticleResponse, ArticlesParams, GetArticle, GetArticles, FeedParams, GetFeed},
+    articles::{ArticleListResponse, ArticleResponse, ArticlesParams, GetArticle, GetArticles, FeedParams, GetFeed, comments::{GetComments, CommentListResponse}},
     profiles::{GetProfile, ProfileResponse},
-    Token,
+    Token, tags::{GetTags, TagsResponse},
 };
 
 pub struct QueryRoot;
@@ -99,6 +99,32 @@ impl QueryRoot {
                 params
             })
             .await??;
+
+        Ok(res)
+    }
+
+    // get comments for article
+    async fn get_comments<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        slug: String,
+    ) -> Result<CommentListResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token)
+            .await
+            .map(|auth| Some(auth))
+            .unwrap_or(None);
+
+        let res = state.db.send(GetComments { auth, slug }).await??;
+
+        Ok(res)
+    }
+
+    // get tags
+    async fn get_tags<'ctx>(&self, ctx: &Context<'ctx>) -> Result<TagsResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let res = state.db.send(GetTags {} ).await??;
 
         Ok(res)
     }

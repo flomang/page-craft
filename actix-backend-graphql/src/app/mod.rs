@@ -103,25 +103,4 @@ pub async fn start_server() -> std::io::Result<()> {
 fn routes(app: &mut web::ServiceConfig)  {
     app.service(web::resource("/").guard(guard::Post()).to(index))
         .service(web::resource("/").guard(guard::Get()).to(index_graphiql));
-
-    // app.service(web::resource("/").to(index)).service(
-    //     web::scope("/api")
-    //         // Article routes ↓
-    //         .service(
-    //             web::resource("articles/{slug}/favorite")
-    //                 .route(web::post().to(articles::favorite))
-    //                 .route(web::delete().to(articles::unfavorite)),
-    //         )
-    //         .service(
-    //             web::resource("articles/{slug}/comments")
-    //                 .route(web::get().to(articles::comments::list))
-    //                 .route(web::post().to(articles::comments::add)),
-    //         )
-    //         .service(
-    //             web::resource("articles/{slug}/comments/{comment_id}")
-    //                 .route(web::delete().to(articles::comments::delete)),
-    //         )
-    //         // Tags routes ↓
-    //         .service(web::resource("tags").route(web::get().to(tags::get))),
-    // );
 }
