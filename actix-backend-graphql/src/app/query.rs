@@ -5,7 +5,7 @@ use crate::{
 use async_graphql::*;
 
 use super::{
-    articles::{ArticleResponse, GetArticle, ArticlesParams, GetArticles, ArticleListResponse},
+    articles::{ArticleListResponse, ArticleResponse, ArticlesParams, GetArticle, GetArticles, FeedParams, GetFeed},
     profiles::{GetProfile, ProfileResponse},
     Token,
 };
@@ -40,7 +40,7 @@ impl QueryRoot {
         Ok(res)
     }
 
-    // get articles
+    // get article by slug
     async fn get_article<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -58,7 +58,7 @@ impl QueryRoot {
         Ok(res)
     }
 
-    // get articles
+    // get articles with optional filter params
     async fn get_articles<'ctx>(
         &self,
         ctx: &Context<'ctx>,
@@ -71,7 +71,34 @@ impl QueryRoot {
             .map(|auth| Some(auth))
             .unwrap_or(None);
 
-        let res = state.db.send(GetArticles { auth, params: filter }).await??;
+        let res = state
+            .db
+            .send(GetArticles {
+                auth,
+                params: filter,
+            })
+            .await??;
+
+        Ok(res)
+    }
+
+    // get articles with optional filter params
+    async fn get_article_feed<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        params: FeedParams,
+    ) -> Result<ArticleListResponse> {
+        let state = ctx.data_unchecked::<AppState>();
+        let token = ctx.data::<Token>()?.0.clone();
+        let auth = authenticate_token(state, token).await?;
+
+        let res = state
+            .db
+            .send(GetFeed {
+                auth,
+                params
+            })
+            .await??;
 
         Ok(res)
     }

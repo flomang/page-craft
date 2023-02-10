@@ -67,6 +67,7 @@ pub async fn start_server() -> std::io::Result<()> {
         SyncArbiter::start(num_cpus::get(), move || DbExecutor(database_pool.clone()));
 
     let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS is not set");
+    log::info!("GraphiQL IDE: {}", bind_address);
 
     HttpServer::new(move || {
         let state = AppState {
@@ -99,20 +100,13 @@ pub async fn start_server() -> std::io::Result<()> {
     .await
 }
 
-fn routes(app: &mut web::ServiceConfig) {
-    log::info!("GraphiQL IDE: http://localhost:8000");
-
+fn routes(app: &mut web::ServiceConfig)  {
     app.service(web::resource("/").guard(guard::Post()).to(index))
         .service(web::resource("/").guard(guard::Get()).to(index_graphiql));
 
     // app.service(web::resource("/").to(index)).service(
     //     web::scope("/api")
     //         // Article routes ↓
-    //         .service(
-    //             web::resource("articles")
-    //                 .route(web::get().to(articles::list))
-    //                 .route(web::post().to(articles::create)),
-    //         )
     //         .service(web::resource("articles/feed").route(web::get().to(articles::feed)))
     //         .service(
     //             web::resource("articles/{slug}")

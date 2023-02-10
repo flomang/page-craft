@@ -32,6 +32,7 @@ pub struct ArticlesParams {
     pub offset: Option<usize>, // <- if not set, is 0
 }
 
+#[derive(async_graphql::InputObject)]
 #[derive(Debug, Deserialize)]
 pub struct FeedParams {
     pub limit: Option<usize>,
